@@ -7,29 +7,46 @@ $username = "root";
 $password = "";
 $dbname = "libreria";
 
+// Connessione al database con gestione degli errori
 $conn = new mysqli($servername, $username, $password, $dbname);
-
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+// Gestione delle azioni POST in modo più sicuro
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $action = $_POST['action'];
+    $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
 
-    if ($action == "add") {
-        $stmt = $conn->prepare("INSERT INTO libri (titolo, autore, anno_pubblicazione, genere, immagine) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssiss", $_POST['titolo'], $_POST['autore'], $_POST['anno_pubblicazione'], $_POST['genere'], $_POST['immagine']);
-        $stmt->execute();
-    } elseif ($action == "delete") {
-        $id = $_POST['id'];
-        $stmt = $conn->prepare("DELETE FROM libri WHERE id = ?");
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-    } elseif ($action == "edit") {
-        $id = $_POST['id'];
-        $stmt = $conn->prepare("UPDATE libri SET titolo=?, autore=?, anno_pubblicazione=?, genere=?, immagine=? WHERE id=?");
-        $stmt->bind_param("ssissi", $_POST['titolo'], $_POST['autore'], $_POST['anno_pubblicazione'], $_POST['genere'], $_POST['immagine'], $id);
-        $stmt->execute();
+    switch ($action) {
+        case "add":
+            $titolo = filter_input(INPUT_POST, 'titolo', FILTER_SANITIZE_STRING);
+            $autore = filter_input(INPUT_POST, 'autore', FILTER_SANITIZE_STRING);
+            $anno_pubblicazione = filter_input(INPUT_POST, 'anno_pubblicazione', FILTER_SANITIZE_NUMBER_INT);
+            $genere = filter_input(INPUT_POST, 'genere', FILTER_SANITIZE_STRING);
+            $immagine = filter_input(INPUT_POST, 'immagine', FILTER_SANITIZE_URL);
+
+            $stmt = $conn->prepare("INSERT INTO libri (titolo, autore, anno_pubblicazione, genere, immagine) VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssiss", $titolo, $autore, $anno_pubblicazione, $genere, $immagine);
+            $stmt->execute();
+            break;
+        case "delete":
+            $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+            $stmt = $conn->prepare("DELETE FROM libri WHERE id = ?");
+            $stmt->bind_param("i", $id);
+            $stmt->execute();
+            break;
+        case "edit":
+            $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+            $titolo = filter_input(INPUT_POST, 'titolo', FILTER_SANITIZE_STRING);
+            $autore = filter_input(INPUT_POST, 'autore', FILTER_SANITIZE_STRING);
+            $anno_pubblicazione = filter_input(INPUT_POST, 'anno_pubblicazione', FILTER_SANITIZE_NUMBER_INT);
+            $genere = filter_input(INPUT_POST, 'genere', FILTER_SANITIZE_STRING);
+            $immagine = filter_input(INPUT_POST, 'immagine', FILTER_SANITIZE_URL);
+
+            $stmt = $conn->prepare("UPDATE libri SET titolo=?, autore=?, anno_pubblicazione=?, genere=?, immagine=? WHERE id=?");
+            $stmt->bind_param("ssissi", $titolo, $autore, $anno_pubblicazione, $genere, $immagine, $id);
+            $stmt->execute();
+            break;
     }
 
     header("Location: " . $_SERVER['PHP_SELF']);
@@ -39,57 +56,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <!DOCTYPE html>
 <html lang="it">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestione Libreria</title>
+    <!-- Tailwind CSS Link per un design moderno e responsive -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.2/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/icons"></script>
-    <style>
-    /* Stile per la navbar */
-    .navbar {
-        background-color: #87CEEB; /* Colore azzurro */
-        color: #fff; /* Testo bianco */
-        position: fixed; /* Navbar rimane in alto */
-        top: 0; /* Navbar rimane attaccata in alto */
-        width: 100%; /* Occupa tutta la larghezza */
-        transition: top 0.5s ease-in-out; /* Animazione più fluida */
-        z-index: 1000; /* Assicura che la navbar sia sopra gli altri elementi */
-    }
-
-    /* Stile per il footer */
-    .footer {
-        background-color: #87CEEB; /* Colore azzurro */
-        color: #fff; /* Testo bianco */
-        text-align: center; /* Testo centrato */
-        padding: 20px 0; /* Spaziatura interna */
-        width: 100%; /* Occupa tutta la larghezza */
-        position: fixed; /* Footer rimane in basso */
-        bottom: 0; /* Footer rimane attaccato in basso */
-        transition: bottom 0.5s ease-in-out; /* Animazione più fluida */
-    }
-
-    /* Stile per la navbar quando scende */
-    .navbar-down {
-        top: -70px; /* Altezza della navbar quando scende */
-    }
-</style>
-
-
 </head>
-
 <body class="bg-gray-100">
-
-    <!-- Navbar sticky -->
-    <div class="navbar p-4 fixed top-0 w-full z-50">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">Damiano Dell'Amore's Library</h1>
-            <button onclick="openModal('addBookModal')" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4">
+<div class="navbar top-0 fixed z-50 w-full p-4 bg-blue-500 hover:bg-pink-500 text-white shadow-lg transition-colors duration-300">
+    <div class="container mx-auto flex justify-between items-center">
+        <h1 class="text-xl font-bold">Damiano Dell'Amore's Library</h1>
+        <button onclick="openModal('addBookModal')" class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded">
             Aggiungi Libro
         </button>
-        </div>
     </div>
+</div>
 
     <div class="container mx-auto px-4 py-8">
         <h1 class="text-xl font-bold mb-4">Libreria personale di Damiano Dell'Amore</h1>
@@ -234,11 +216,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     </div>
     <!-- Footer -->
-    <footer class="footer p-4">
-        <div class="container mx-auto text-center">
-            <p>&copy; 2024 Damiano Dell'Amore. Tutti i diritti riservati.</p>
-        </div>
-    </footer>
+ <!-- Footer migliorato con Tailwind CSS -->
+ <footer class="bg-blue-500 hover:bg-pink-500 text-white text-center p-4 absolute bottom-0 w-full transition-colors duration-300">
+    &copy; 2024 Damiano Dell'Amore. Tutti i diritti riservati.
+</footer>
+
 
     <script>
         function openModal(modalId) {

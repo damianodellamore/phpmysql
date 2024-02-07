@@ -217,7 +217,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div>
     <!-- Footer -->
  <!-- Footer migliorato con Tailwind CSS -->
- <footer class="bg-blue-500 hover:bg-pink-500 text-white text-center p-4 absolute bottom-0 w-full transition-colors duration-300">
+ <footer class="bg-blue-500 hover:bg-pink-500 text-white text-center p-4 sticky bottom-0 w-full transition-colors duration-300">
     &copy; 2024 Damiano Dell'Amore. Tutti i diritti riservati.
 </footer>
 
